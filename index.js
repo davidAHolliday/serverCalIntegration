@@ -9,50 +9,62 @@ const { CreateGoogleEvent } = require('./functions/googleEventCreator');
 const app = express();
 const port = 3000;
 
-
 let SESSION_TOKEN =""
-
 
 //Login and session cookie
 const puppeteer = require('puppeteer');
 
-const browse = async (res) => {
+const MAX_RETRY_ATTEMPTS = 3; // Define the maximum number of retry attempts
+
+const browse = async (res, retryCount = 0) => {
     try {
-      const browser = await puppeteer.launch();
-      const page = await browser.newPage();
-  
-      // Navigate to the login page
-      await page.goto('https://krowd.darden.com/krowd/#/home');
-  
-      // Get the page title before login
-      let pageTitleBeforeLogin = await page.title();
-      console.log('Page Title (Before Login):', pageTitleBeforeLogin);
-  
-      // Fill in the login credentials and submit the form
-      await page.type('input[name="USER"]', 'DAP06275319');
-      await page.type('input[name="PASSWORD"]', 'uuvntFJt8pbdrH2');
-      await Promise.all([
-        page.waitForNavigation(), // Wait for navigation to complete
-        page.click('#btnLogin'), // Click the login button
-      ]);
-  
-  
-      // Access and log the cookies
-      setTimeout(async () => {
-        const cookies = await page.cookies();
-        // SM cookie is the first one
-        console.log('Cookies:', cookies[0].value);
-        SESSION_TOKEN = cookies[0].value;
-        await browser.close();
-  
-        // After closing the browser, call runCollection
-        runCollection(res);
-  
-      }, 7000);
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
+
+        // Navigate to the login page
+        await page.goto('https://krowd.darden.com/krowd/#/home');
+
+        // Get the page title before login
+        let pageTitleBeforeLogin = await page.title();
+        console.log('Page Title (Before Login):', pageTitleBeforeLogin);
+
+        // Fill in the login credentials and submit the form
+        await page.type('input[name="USER"]', 'DAP06275319');
+        await page.type('input[name="PASSWORD"]', 'uuvntFJt8pbdrH2');
+        await Promise.all([
+            page.waitForNavigation(), // Wait for navigation to complete
+            page.click('#btnLogin'), // Click the login button
+        ]);
+
+        // Define a function to check for the SMSESSION cookie
+        const checkCookieAndRunCollection = async () => {
+            const cookies = await page.cookies();
+            console.log(cookies);
+            const smSessionCookie = cookies.find(cookie => cookie.name === 'SMSESSION');
+
+            if (smSessionCookie) {
+                console.log('SMSESSION Cookie:', smSessionCookie.value);
+                SESSION_TOKEN = smSessionCookie.value;
+                await browser.close();
+                runCollection(res);
+            } else {
+                console.error('SMSESSION Cookie not found.');
+                await browser.close();
+                if (retryCount < MAX_RETRY_ATTEMPTS) {
+                    console.log(`Retrying (${retryCount + 1}/${MAX_RETRY_ATTEMPTS})...`);
+                    await browse(res, retryCount + 1);
+                } else {
+                    console.error('Max retry attempts reached. Exiting...');
+                }
+            }
+        };
+
+        // Wait for 5 seconds to allow time for cookies to load
+        setTimeout(checkCookieAndRunCollection, 5000);
     } catch (error) {
-      console.error('Error during browsing:', error);
+        console.error('Error during browsing:', error);
     }
-  };
+};
 
 
 
@@ -121,10 +133,6 @@ for (let index = 0; index < collections.length; index++) {
 
 
 
-
-
-//Date is (YYYY-MM-DD)
-
 parallelCollectionRun = function (done) {
     for (let index=0; index < collectionToRun.length; index++){
         newman.run(collectionToRun[index], 
@@ -145,6 +153,8 @@ parallelCollectionRun = function (done) {
                 );
 
             
+
+
                      CreateGoogleEvent(res, uniqueShifts);
 
 
@@ -171,9 +181,6 @@ async.parallel(
                 `${result.collection.name} ran successfully.`);
     });
 
-
-  
-
 });
 
 }
@@ -181,32 +188,13 @@ async.parallel(
 
   
 
-
-
-
-
-
-
-const  obj = {
-  summary: 'Shift - TO GO Spec',
-  description: 'Olive Garden Work Shift',
-  start: {
-    dateTime: '2024-04-20T12:00:00-05:00',
-    timeZone: 'America/Chicago'
-  },
-  end: {
-    dateTime: '2024-04-20T18:15:00-05:00',
-    timeZone: 'America/Chicago'
-  }
-}
-
-
-  
 app.get('/poll', async (req, res) => {
     await browse(res);
     // CreateGoogleEvent(res, [])
   });
   
+
+
 
  
   app.listen(port, () => console.log(`Example app listening on port ${port}!`));
