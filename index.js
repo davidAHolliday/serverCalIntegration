@@ -12,7 +12,6 @@ const port = 3000;
 
 let SESSION_TOKEN =""
 
-let SHIFTDATA = [];
 
 //Login and session cookie
 const puppeteer = require('puppeteer');
@@ -200,8 +199,10 @@ const  obj = {
     timeZone: 'America/Chicago'
   }
 }
+
+
   
-app.get('/', async (req, res) => {
+app.get('/poll', async (req, res) => {
     await browse(res);
     // CreateGoogleEvent(res, [])
   });

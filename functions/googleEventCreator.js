@@ -34,40 +34,9 @@ const GOOGLE_PROJECT_NUMBER = "242540725411";
 const GOOGLE_CALENDAR_ID = "dochollidayp@gmail.com";
 const GOOGLE_CLIENT_EMAIL = "holliday99@active-apogee-421503.iam.gserviceaccount.com";
 
-const unique = [
-    {
-        restRequiredLaborId: 1913267967,
-        restaurantId: 201265,
-        startDateTime: '2024-04-20T12:00:00',
-        endDateTime: '2024-04-20T18:15:00',
-        jobClass: 'TO GO Spec'
-    },
-    {
-        restRequiredLaborId: 1913269554,
-        restaurantId: 201265,
-        startDateTime: '2024-04-27T11:00:00',
-        endDateTime: '2024-04-27T16:00:00',
-        jobClass: 'TO GO Spec'
-    },
-    {
-        restRequiredLaborId: 1913269549,
-        restaurantId: 201265,
-        startDateTime: '2024-04-27T16:00:00',
-        endDateTime: '2024-04-27T20:00:00',
-        jobClass: 'TO GO Spec'
-    },
-    {
-        restRequiredLaborId: 1918354608,
-        restaurantId: 201265,
-        startDateTime: '2024-05-04T11:00:00',
-        endDateTime: '2024-05-04T16:00:00',
-        jobClass: 'TO GO Spec'
-    }
-];
-
 const jsonToEvent = (data) => {
     const eventObj = {
-        summary: `Shift - ${data.jobClass}`,
+        summary: `Shift - ${data.jobClass} : ${data.restRequiredLaborId}`,
         description: 'Olive Garden Work Shift',
         start: {
             dateTime: `${data.startDateTime}-05:00`,
@@ -79,12 +48,16 @@ const jsonToEvent = (data) => {
         },
     };
 
-    console.log("obj:", eventObj);
-
     return eventObj;
 };
 
-const CreateGoogleEvent = async (res, dataArray) => {
+const CreateGoogleEvent = async (res, data) => {
+
+const today = new Date().toISOString().split('T')[0];
+
+//Filter By Date
+const filteredData = data.filter(item => item.startDateTime.split('T')[0] >= today);
+
     try {
         const jwtClient = new google.auth.JWT(
             GOOGLE_CLIENT_EMAIL,
@@ -103,7 +76,7 @@ const CreateGoogleEvent = async (res, dataArray) => {
             auth: jwtClient,
         });
 
-        for (const data of dataArray) {
+        for (const data of filteredData) {
             const eventToSend = jsonToEvent(data);
             console.log('eventToSend', eventToSend);
 
