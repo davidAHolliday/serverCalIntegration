@@ -12,16 +12,9 @@ require("dotenv").config();
 const app = express();
 const port = parseInt(process.env.PORT) || 3000;
 
-let SESSION_TOKEN =""
-
-
-
-
-
+let SESSION_TOKEN = "wmvnCvxh/e0UhsjQ/5VfYWLk/VMFULVx7g9yE+4UwfDbO9S1FnoxsvDl6pJMSqB/rPPgx5L4FP5bYoTVCMM7yK+ZvTQj3rDJFo/9xedNYhE+zeKB0zI8m4pBeTmNnfhnC/6u+XGy8fTmqdj1IIw2X8uqzBHUNwk5J8OoPs+ptcAK9EzLVVXa5bI65mWeZdNkvZblAJUaXUsJD/XOb4id7JSxZBASoK8V8mXLsl0FFvgd/B/ZzWWS9ZcQy8EiofQIsDAs9ZI+oTfGl/iydznBTsg/ktakkivys8N9u4T/prM1jzO2Zd1XqDuQbRbeVvEHeUkQbC389kAPQfXn4Vb225Rt+20wtU8WUG/I7dx9Eyl0Sd8nzQIB4WBcUE0ZtziVTOaiBUQ6YUMHux/ECJyMXmxq7L+5lUfsKectlsZhY9gj9V//QMy1DPgigJAXvO4o73W2itIELkF6vi8y9lhKyexrwUjHHZhKk40SCsewa868Ay5MdrsAKRJtJEDSDLgyedDqbtY2UIlijIzSKb/YfoY1B8wM7W8o4LSALpvOmM++KWnuaHtPGiPgNwaIZYE/tvCploSSxAt9Rx2yDpsMp8uunyoazdz0G8mD1MH0MW834WUICIRmHK8gHY+BUgVuvQPQMHMEwOInnLWwNOuWhKNzRzfCnt9lrkdrZS7mMos/EKsQVpRCeqyLtI5/MXaHa+FaImj4eWy1TCs9HUMuuGuC862HFvmCqsOqSk+qq9Zfmbo0PJoizWkDFUALX+Apz4SIzw9FM2jqnHWaixpPYbPCHKsjCd9+zw9yi2ZW4kxNqAmsm/nCVyAyJ9JmScAIBTIKjXg6z+wBTdpUyPv4acMgnPprRLL8PxYkdI+BGdUuk160ChszsWL5dxW6XMSHXacLyYie+zzAf49Y0DoKxzKiX1f4H1abbX6w+PXg2OFQTGbSItZ0WRct8K3a3nkg/i3MHrLduragENp7YjVyzg30LSlLr5vF6xZaZQdvAicyA2K6bUPZ9yNXaVsILIYAHIBGblb27T5wcgCOf6OKcMwPJLTMDrpHCQ6u3pak1/R7Vf61UsxwCupDrKxKSfREL/+CVVorfh2G1vcomGNC41avvrulS9/0bvg/L9MtHAUhwjj6WUCdFERRnG4gqDY5QNOlM6liRJ/yIAphHheiITnAEtRGXVKaCJsZ5EoQnk6gpaaIQ0J/Ql2js11sUrTWdJqiYMLBhYh5gHG/8/Lc/5biDc0JztHQ2FACFuYAlSeIpeOQndUrbBrKJWn+Mhnt9z7lMVUFc72rBuDdZFY8eI2kjWnAyGW3"
 
 const MAX_RETRY_ATTEMPTS = 3; // Define the maximum number of retry attempts
-
-
 
 const browse = async (res, retryCount = 0) => {
     try {
@@ -50,8 +43,9 @@ const browse = async (res, retryCount = 0) => {
         await page.type('input[name="USER"]', 'DAP06275319');
         await page.type('input[name="PASSWORD"]', 'uuvntFJt8pbdrH2');
         await Promise.all([
-            page.waitForNavigation(), // Wait for navigation to complete
             page.click('#btnLogin'), // Click the login button
+            page.waitForNavigation(), // Wait for navigation to complete
+
         ]);
 
         // Define a function to check for the SMSESSION cookie
@@ -82,11 +76,7 @@ const browse = async (res, retryCount = 0) => {
     } catch (error) {
         console.error('Error during browsing:', error);
     }
-    finally {
-        await browse.close();
 
-
-    }
     
 };
 
@@ -118,9 +108,10 @@ const date = '2024-04-08'
 
 for (let index = 0; index < collections.length; index++) {
     collectionToRun[index] = {
+        //  collection : path.join("/usr/src/app/", collections[index]), 
         collection: path.join(__dirname, collections[index]), 
-        environment: path.join(__dirname, environment), 
-        reporters: ['cli','htmlextra','junit'],
+        // environment: path.join(__dirname, environment), 
+        reporters: ['cli'],
         bail: newman,
         envVar:  [
             {
@@ -214,6 +205,11 @@ app.get('/poll', async (req, res) => {
     await browse(res);
     // CreateGoogleEvent(res, [])
   });
+
+  app.get('/run', async (req, res) => {
+    runCollection(res)
+  });
+
 
 
   app.get('/', async (req, res) => {
