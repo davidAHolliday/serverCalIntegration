@@ -3,23 +3,41 @@ const async = require('async');
 const newman = require('newman');
 const express = require('express'); 
 const { CreateGoogleEvent } = require('./functions/googleEventCreator');
+const puppeteer = require('puppeteer');
+require("dotenv").config();
+
 
 
 
 const app = express();
-const port = 3000;
+const port = parseInt(process.env.PORT) || 3000;
 
 let SESSION_TOKEN =""
 
-//Login and session cookie
-const puppeteer = require('puppeteer');
+
+
+
+
 
 const MAX_RETRY_ATTEMPTS = 3; // Define the maximum number of retry attempts
 
+
+
 const browse = async (res, retryCount = 0) => {
     try {
-        const browser = await puppeteer.launch();
-        const page = await browser.newPage();
+        const browser = await puppeteer.launch({
+            args: [
+              "--disable-setuid-sandbox",
+              "--no-sandbox",
+              "--single-process",
+              "--no-zygote",
+            ],
+            executablePath:
+              process.env.NODE_ENV === "production"
+                ? process.env.PUPPETEER_EXECUTABLE_PATH
+                : puppeteer.executablePath(),
+          });
+             const page = await browser.newPage();
 
         // Navigate to the login page
         await page.goto('https://krowd.darden.com/krowd/#/home');
@@ -64,9 +82,13 @@ const browse = async (res, retryCount = 0) => {
     } catch (error) {
         console.error('Error during browsing:', error);
     }
+    finally {
+        await browse.close();
+
+
+    }
+    
 };
-
-
 
 
 
@@ -190,6 +212,12 @@ async.parallel(
 
 app.get('/poll', async (req, res) => {
     await browse(res);
+    // CreateGoogleEvent(res, [])
+  });
+
+
+  app.get('/', async (req, res) => {
+    console.log("HELLO DAVID")
     // CreateGoogleEvent(res, [])
   });
   
